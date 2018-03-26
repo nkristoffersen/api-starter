@@ -1,0 +1,32 @@
+language:
+  - node_js
+node_js:
+  - "stable"
+services:
+  - postgresql
+addons:
+  postgresql: "9.6"
+before_script:
+  - psql -c 'create database jobhero_db_test;' -U postgres
+  - psql -c 'CREATE EXTENSION pgcrypto;' -U postgres
+cache:
+  directories:
+  - node_modules
+script:
+  - npm install --progress=false
+  - export PATH=~/.local/bin:$PATH
+  - echo $PATH
+  - npm test
+  - echo "$DEPLOY_KEY_FILE_PRODUCTION" > /tmp/$CI_PIPELINE_ID.json
+  - echo 'JWT_SECRET='$JWT_SECRET >> .env
+  - echo 'DATABASE_URL='$DATABASE_URL >> .env
+  - echo 'MAILGUN_API_KEY='$MAILGUN_API_KEY >> .env
+  - echo 'MAILGUN_API_DOMAIN='$MAILGUN_API_DOMAIN >> .env
+  - rm .gitignore
+deploy:
+  skip_cleanup: true
+  provider: gae
+  keyfile: /tmp/$CI_PIPELINE_ID.json
+  project: $PROJECT_ID_PRODUCTION
+  on:
+    branch: master
